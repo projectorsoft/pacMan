@@ -1,0 +1,10 @@
+{
+    "highScore": "Najlepszy wynik: {score}",
+    "pressEnter": "Naciśnij ENTER abyz zacząć",
+    "onePlayer": "1 GRACZ",
+    "twoPlayers": "2 GRACZY",
+    "player": "GRACZ",
+    "ready": "GOTOWY",
+    "gameOver": "PRZEGRYWA",
+    "won": "WYGRYWA"
+}
