@@ -1,6 +1,17 @@
 # pacMan
 
-This template should help get you started developing with Vue 3 in Vite.
+This is PacMan like game.
+Like in the old classic PacMan, go through maze, eat pellets and avoid ghosts.
+
+Features implemented:
+1. Maze based on spritesheet
+2. Animated PacMan
+3. Different kind of ghosts and behaviour
+- Red - chasing PacMan
+- Pink - chasing but trying to be few steps ahead of it
+- The rest moves randomly
+3. Similar sounds
+4. Power ups making ghosts scary
 
 ## Recommended IDE Setup
 
