@@ -1,0 +1,10 @@
+{
+    "highScore": "HI-SCORE: {score}",
+    "pressEnter": "Press ENTER to start",
+    "onePlayer": "1 PLAYER",
+    "twoPlayers": "2 PLAYERS",
+    "player": "PLAYER",
+    "ready": "READY",
+    "gameOver": "GAME OVER",
+    "won": "WON"
+}
