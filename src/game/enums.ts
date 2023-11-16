@@ -75,6 +75,7 @@ export enum WallType {
 
 export enum Color {
     White = 'rgb(255, 255, 255)',
+    Black = 'rgb(0, 0, 0)',
     Blue = 'rgb(0, 162, 232)',
     Orange = 'rgb(255, 154,58)',
     Red = 'rgb(255, 0, 0)',

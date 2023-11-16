@@ -40,7 +40,7 @@ export class Menu {
 
             this._items = [
                 new MenuItem(this._translationsService.getTranslation('onePlayer'), new Point(0, this._yOffset + 200)),
-                new MenuItem(this._translationsService.getTranslation('twoPlayers'), new Point(0, this._yOffset + 250))
+                //new MenuItem(this._translationsService.getTranslation('twoPlayers'), new Point(0, this._yOffset + 250))
             ]
 
             this.reset();
@@ -132,7 +132,7 @@ export class Menu {
                 this._selectedIndex = this._selectedIndex - 1;
 
                 if (this._selectedIndex < 0)
-                    this._selectedIndex = 1;
+                    this._selectedIndex = this._items.length - 1;
                 break;
             case Keys.Down:
                 this._selectedIndex = this._selectedIndex + 1;
