@@ -61,6 +61,7 @@ export class Game {
             if (this._gameMode === GameMode.Menu)
                 return;
 
+            this._timersManager.pause();
             this._soundsPlayer.audio.pause();
             this._stopped = true;
         };
@@ -68,7 +69,9 @@ export class Game {
             if (this._gameMode === GameMode.Menu)
                 return;
 
-            this._soundsPlayer.audio.play();
+            this._timersManager.resume();
+            if (!this._soundsPlayer.audio.ended)
+                this._soundsPlayer.audio.play();
             this._stopped = false;
         };
 

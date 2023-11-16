@@ -1,5 +1,7 @@
+import { Timer } from "./timer";
+
 export class TimersManager {
-    private _timers: { [name: string]: number | undefined } = {};
+    private _timers: { [name: string]: Timer | undefined } = {};
 
     public constructor() {
     }
@@ -11,27 +13,25 @@ export class TimersManager {
         if (this._timers[name] && replace)
             this.delete(name);
 
-        const timerId = setTimeout(() => {
+        this._timers[name] = new Timer(name, () => {
             this.delete(name);
             handler();
         }, timeout);
-        this._timers[name] = timerId;
     }
 
     public addInterval(name: string, handler: Function, timeout: number): void {
         if (this._timers[name])
             return;
 
-        const intervalId = setInterval(() => {
+        this._timers[name] = new Timer(name, () => {
             handler();
-        }, timeout);
-
-        this._timers[name] = intervalId;
+        }, timeout, true);
     }
 
     public delete(name: string): void {
         if (this._timers[name]) {
-            clearTimeout(this._timers[name]);
+            //console.log(name, 'deleted')
+            clearTimeout(this._timers[name]?.timerId);
             this._timers[name] = undefined;
         }
     }
@@ -40,7 +40,21 @@ export class TimersManager {
         return this._timers[name] !== undefined;
     }
 
-    public deleteAll(): void {
-        //TODO
+    public pause(): void {
+        Object.keys(this._timers).forEach(key => {
+            if (this._timers[key]) {
+                //console.log(`${key} paused`)
+                this._timers[key]?.pause();
+            }
+        });
+    }
+
+    public resume(): void {
+        Object.keys(this._timers).forEach(key => {
+            if (this._timers[key]) {
+                //console.log(`${key} started`)
+                this._timers[key]?.start();
+            }
+        });
     }
 }
