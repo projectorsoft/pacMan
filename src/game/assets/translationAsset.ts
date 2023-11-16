@@ -25,7 +25,9 @@ export class TranslationAsset implements IAsset {
                     translations.json().then((data) => this._data = data);
                     resolve(true);  
                 })
-                .catch(() => reject(false));
+                .catch(() => {
+                    reject(false);
+                });
         });
     }
 }

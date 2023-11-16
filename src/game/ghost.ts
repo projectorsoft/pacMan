@@ -6,14 +6,18 @@ import { Helpers } from "./helpers.js";
 import { IMap } from "./maps/IMap.js";
 import { Player } from "./player.js";
 import { Point } from "./point.js";
+import { SoundsPlayer } from "./soundsPlayer.js";
+import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Ghost implements ICircleBasedSprite {
-    public static Velocity: number = 3;
+    public static Velocity: number = 4;
     public static GhostsEaten: number = 0;
 
     private _context: CanvasRenderingContext2D;
     private _settings: IGhostSettings;
+    private _soundsPlayer: SoundsPlayer;
+    private _timersManager: TimersManager;
     private _position: Point;
     private _velocity: Point;
     private _radius: number = 18;
@@ -29,7 +33,6 @@ export class Ghost implements ICircleBasedSprite {
     private _animationFrameSize = 209;
     private _showScore: boolean = false;
     private _currentGhostEaten: number = 0;
-    private _canBeFrightend = true; //needed when ghost has been repawned and panic time is not out
     private _changeToOppositeDirection: boolean = false;
     private _minDstance: number = 999999;
     private _forceMoveRandomly: boolean = false;
@@ -65,21 +68,13 @@ export class Ghost implements ICircleBasedSprite {
 
     set isHidden(isHidden: boolean) {
         if (!isHidden && this._isHidden) {
-            setTimeout(() => {
+            this._timersManager.addTimer(`${this._type}_respawn`, () => {
                 this._velocity = new Point(0, -Ghost.Velocity);
                 this.setRandomMovemntTimeout();
-            }, this._delay);
+            }, this._delay, true);
         }
 
         this._isHidden = isHidden;
-    }
-
-    get canBeFrightend(): boolean {
-        return this._canBeFrightend;
-    }
-
-    set canBeFrightend(value: boolean) {
-        this._canBeFrightend = value;
     }
 
     get mode(): GhostMode {
@@ -91,20 +86,45 @@ export class Ghost implements ICircleBasedSprite {
 
         switch (mode) {
             case GhostMode.Eaten: {
+                    if (this._timersManager.exists(`${this._type}_${GhostMode.Frightend}`)) {
+                        this._timersManager.delete(`${this._type}_${GhostMode.Frightend}`);
+                    }
+
                     this._currentGhostEaten = Ghost.GhostsEaten++;
                     this._showScore = true;
-                    this._canBeFrightend = false;
                     const currentVelocity = this._velocity;
                     this._velocity = new Point(0, 0);
 
-                    setTimeout(() => {
+                    this._timersManager.addTimer(`${this._type}_${this.mode}`, () => {
                         this._showScore = false;
                         this._velocity = currentVelocity;
                     }, 1500);
                 }
                 break;
-            case GhostMode.Frightend:
-                this._changeToOppositeDirection = true;
+            case GhostMode.Frightend: {
+                    this._changeToOppositeDirection = true;
+
+                    //situation when next power up has been eaten and previous one is still ticking
+                    if (this._timersManager.exists(`${this._type}_${this.mode}`)) {
+                        this._timersManager.delete(`${this._type}_${this.mode}`);
+                    }
+
+                    let counter: number = 0;
+                    this._timersManager.addInterval(`${this._type}_${GhostMode.Frightend}`, () => {
+                        counter = counter + 1;
+                        if (counter === 12 || counter === 14 || counter === 16 || counter === 18 || counter === 20)
+                            this._mode = GhostMode.FrightendEnding;
+                        else
+                            this._mode = GhostMode.Frightend;
+
+                        if(counter === 21) {
+                            this._timersManager.delete(`${this._type}_${GhostMode.Frightend}`);
+                            Ghost.GhostsEaten = 0;
+                            this._soundsPlayer.play(Asset.AlarmAudio);
+                                this._mode = GhostMode.Chase;
+                        }
+                    }, 500);
+                }
                 break;
             case GhostMode.Chase:
                 break;
@@ -114,24 +134,29 @@ export class Ghost implements ICircleBasedSprite {
     constructor(
         context: CanvasRenderingContext2D,
         assetsManager: AssetsManager,
+        soundsPlayer: SoundsPlayer,
+        timersManager: TimersManager,
         position: Point,
         velocity: Point,
         settings: IGhostSettings,
         map: IMap
     ) {
-        this._settings = settings;
         this._context = context;
+        this._soundsPlayer = soundsPlayer;
+        this._timersManager = timersManager;
         this._position = position;
         this._velocity = new Point(0, 0);
+        this._settings = settings;
+
         this.setDefaultProperties();
         this.setGhostType();
         this._image = assetsManager.getImage(Asset.GhostsImg);
         this._mapSize = map.data[0].length;
 
-        setTimeout(() => {
+        this._timersManager.addTimer(`${this._type}_respawn`, () => {
             this._velocity = velocity;
             this.setRandomMovemntTimeout();
-        }, settings.delay);
+        }, settings.delay, true);
     }
 
     public draw(): void {
@@ -164,7 +189,6 @@ export class Ghost implements ICircleBasedSprite {
         this._context.fillText(`(${ this._forceMoveRandomly } )`, this._position.x - 15, this._position.y - 20); */
 
         this._context.closePath();
-
     }
 
     public update(): void {
@@ -180,6 +204,11 @@ export class Ghost implements ICircleBasedSprite {
             case GhostMode.Frightend:
                 this._animationGhostTypeIndex = 4;
                 this._animationIndex = 0;
+                this.updateAnimationMovement();
+                break;
+            case GhostMode.FrightendEnding:
+                this._animationGhostTypeIndex = 4;
+                this._animationIndex = 2;
                 this.updateAnimationMovement();
                 break;
             case GhostMode.Eaten:
@@ -277,22 +306,22 @@ export class Ghost implements ICircleBasedSprite {
                     this.moveToPoint(possibleDirections, playerPoint, velocityFactor);
                 }
                 else 
-                if (this._type === GhostType.Pinky) {
+                if (this._type === GhostType.Pinky || this._type === GhostType.Clyde) {
                     const playerPoint = new Point(player.position.x / Wall.Width, player.position.y / Wall.Height);
                     const direction = this.getDirection(player.velocity);
 
                     switch (direction) {
                         case Direction.Left:
-                            playerPoint.x = playerPoint.x - 4;
+                            playerPoint.x = playerPoint.x - 2;
                             break;
                         case Direction.Right:
-                            playerPoint.x = playerPoint.x + 4;
+                            playerPoint.x = playerPoint.x + 2;
                             break;
                         case Direction.Top:
-                            playerPoint.y = playerPoint.y - 4;
+                            playerPoint.y = playerPoint.y - 2;
                             break;
                         case Direction.Down:
-                            playerPoint.y = playerPoint.y + 4;
+                            playerPoint.y = playerPoint.y + 2;
                             break;
                         default:
                             break;
@@ -304,6 +333,7 @@ export class Ghost implements ICircleBasedSprite {
                     this.moveRandomly(possibleDirections, velocityFactor);
                 break;
             case GhostMode.Frightend:
+            case GhostMode.FrightendEnding:
                 this.moveRandomly(possibleDirections, velocityFactor);
                 break;
             case GhostMode.Eaten:
@@ -377,6 +407,10 @@ export class Ghost implements ICircleBasedSprite {
 
     //when PacMan eaten by Ghost
     public restart(): void {
+        if (this._timersManager.exists(`${this._type}_${GhostMode.Frightend}`)) {
+            this._timersManager.delete(`${this._type}_${GhostMode.Frightend}`);
+        }
+
         this._isHidden = true;
         this._velocity = new Point(0, 0);
 
@@ -418,9 +452,10 @@ export class Ghost implements ICircleBasedSprite {
             case GhostMode.Chase:
                 return Ghost.Velocity;
             case GhostMode.Frightend:
-                return Ghost.Velocity - 1;
+            case GhostMode.FrightendEnding:
+                return Ghost.Velocity - 2;
             case GhostMode.Eaten:
-                return Ghost.Velocity + 4;
+                return Ghost.Velocity + 5;
             default: throw `Not supported ghodt mode ${this._mode}`;
         }
     }
@@ -493,6 +528,6 @@ export class Ghost implements ICircleBasedSprite {
 
     private setRandomMovemntTimeout(): void {
         this._forceMoveRandomly = true;
-        setTimeout(() => this._forceMoveRandomly = false, this._randomMovemntTime);
+        this._timersManager.addTimer(`${this._type}_randomMovement`, () => this._forceMoveRandomly = false, this._randomMovemntTime, true);
     }
 }

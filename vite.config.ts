@@ -5,12 +5,14 @@ import vue from '@vitejs/plugin-vue'
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base: "/pacMan/",
+  base: process.env.NODE_ENV === "development" ? "/" : "/pacMan/",
   plugins: [
     vue(),
   ],
   resolve: {
-    alias: [
-    ]
+    alias: 
+    {
+      '@': fileURLToPath(new URL('./src', import.meta.url))
+    }
   },
 })

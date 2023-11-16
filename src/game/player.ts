@@ -1,10 +1,13 @@
 import { ICircleBasedSprite } from "./IColidableObject.js";
-import { Asset, Color, Keys } from "./enums.js";
+import { Asset, Color, GhostMode, Keys, ScoreType, Timers } from "./enums.js";
 import { Helpers } from "./helpers.js";
 import { InputManager } from "./inputManager.js";
 import { MapManager } from "./mapManager.js";
+import { Pellet } from "./pellet.js";
 import { Point } from "./point.js";
+import { PowerUp } from "./powerUp.js";
 import { SoundsPlayer } from "./soundsPlayer.js";
+import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Player implements ICircleBasedSprite {
@@ -18,9 +21,13 @@ export class Player implements ICircleBasedSprite {
     private _chopeSpeed: number = 0.18;
     private _rotation: number = 0;
     private _isKilled: boolean = false;
+    private _isBusy: boolean = false;
+    private _life: number = 3;
+    private _score: number = 0;
     private _inputManager: InputManager;
     private _mapManager: MapManager;
     private _soundsPlayer: SoundsPlayer;
+    private _timersManager: TimersManager;
 
     get position(): Point {
         return this._position;
@@ -43,16 +50,54 @@ export class Player implements ICircleBasedSprite {
     }
 
     set isKilled(value: boolean) {
-        this._isKilled = value;
-
         this._soundsPlayer.play(Asset.DeathAudio);
+        this._isBusy = value;
+
+        if (value) {
+            this._velocity = new Point(0, 0);
+
+            this._mapManager.ghosts.forEach(ghost => {
+                ghost.velocity = new Point(0, 0);
+            });
+
+            this._timersManager.addTimer(Timers.BeforeDie, () => {
+                this._mapManager.ghosts.forEach(ghost => {
+                    ghost.restart();
+                });
+                this._isKilled = true;
+
+                this._timersManager.addTimer(Timers.AfterDie, () => {
+                    if (this._life > 0) {
+                        this.respawn();
+                        this._mapManager.ghosts.forEach(ghost => {
+                            ghost.isHidden = false;
+                        });
+                    }
+                }, 1400);
+            }, 1000);
+        }
+    }
+
+    public get life(): number {
+        return this._life;
+    }
+    public set life(value: number) {
+        this._life = value;
+    }
+
+    public get score(): number {
+        return this._score;
+    }
+    public set score(value: number) {
+        this._score = value;
     }
     
     constructor(
         context: CanvasRenderingContext2D,
         mapManager: MapManager,
         inputManager: InputManager,
-        soundsPlayer: SoundsPlayer
+        soundsPlayer: SoundsPlayer,
+        timersManager: TimersManager
     ) {
         this._context = context;
         this._position = new Point(Wall.Width + Wall.Width / 2, Wall.Height + Wall.Height / 2);
@@ -60,6 +105,9 @@ export class Player implements ICircleBasedSprite {
         this._inputManager = inputManager;
         this._mapManager = mapManager;
         this._soundsPlayer = soundsPlayer;
+        this._timersManager = timersManager;
+        this._score = 0;
+        this._life = 3;
     }
 
     public draw(): void {
@@ -84,8 +132,13 @@ export class Player implements ICircleBasedSprite {
             return;
         }
 
+        const index = this.getMapIndex();
+
         this.handleKeys();
         this.checkWallsCollision();
+        this.checkPelletCollision(index);
+        this.checkPowerUpCollision(index);
+        this.checkGhostCollison();
 
         this._position.x += this._velocity.x;
         this._position.y += this._velocity.y;
@@ -101,6 +154,7 @@ export class Player implements ICircleBasedSprite {
 
     public respawn(): void {
         this._isKilled = false;
+        this._isBusy = false;
         this._rotation = 0;
         this._radians = 0.5
         this._position.x = Wall.Width + Wall.Width / 2;
@@ -113,6 +167,9 @@ export class Player implements ICircleBasedSprite {
     }
 
     private handleKeys(): void {
+        if (this._isBusy || this._isKilled)
+            return;
+
         if (this._inputManager.isKeyPressed(Keys.Up) && this._inputManager.lastKey === Keys.Up) {
             for (let i = 0; i < this._mapManager.walls.length; i++) {
                 const wall = this._mapManager.walls[i];
@@ -167,6 +224,55 @@ export class Player implements ICircleBasedSprite {
         });
     }
 
+    private checkPelletCollision(index: number): void {
+        if (this._mapManager.pellets.has(index)) {
+            const pellet = this._mapManager.pellets.get(index) as Pellet;
+            if (Helpers.hypot(pellet.position.x - this.position.x, pellet.position.y - this.position.y) < pellet.radius + this.radius) {
+                this._mapManager.pellets.delete(index);
+                this.score += ScoreType.Pellet;
+                this._soundsPlayer.play(Asset.ChompAudio);
+            } else  {
+                this._soundsPlayer.play(Asset.AlarmAudio);
+            }
+        }
+    }
+
+    private checkPowerUpCollision(index: number): void {
+        if (this._mapManager.powerUps.has(index)) {
+            const powerup = this._mapManager.powerUps.get(index) as PowerUp;
+
+            if (Helpers.hypot(powerup.position.x - this.position.x, powerup.position.y - this.position.y) < powerup.radius + this.radius) {
+                this._mapManager.powerUps.delete(index);
+                this.score += ScoreType.PowerUp;
+                this._mapManager.ghosts.forEach(ghost => {
+                    if (ghost.mode !== GhostMode.Eaten)
+                        ghost.mode = GhostMode.Frightend;
+                });
+                this._soundsPlayer.play(Asset.PanicAudio);
+            }
+        }
+    }
+
+    private checkGhostCollison(): void {
+        if (!this._isBusy) {
+            for (let i = this._mapManager.ghosts.length - 1; 0 <= i; i--) {
+                const ghost = this._mapManager.ghosts[i];
+
+                if (Helpers.hypot(ghost.position.x - this.position.x, ghost.position.y - this.position.y) < ghost.radius / 2 + this.radius / 2) {
+                    if (ghost.mode === GhostMode.Frightend) {
+                        this.score += ScoreType.Ghost;
+                        ghost.mode = GhostMode.Eaten;
+                        this._soundsPlayer.play(Asset.GhostEatenAudio);
+                    } else if (ghost.mode === GhostMode.Chase) {
+                        this.isKilled = true;
+                        this.life--;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
     private animateChomp(): void {
         if (this._velocity.x === 0 && this._velocity.y === 0) {
             this._radians = 0.5; //always open "mouth" when staying
@@ -189,12 +295,18 @@ export class Player implements ICircleBasedSprite {
     }
 
     private animateDie(): void {
-        if (this._radians >= 3) {
-            setTimeout(() => this.respawn(), 150);
+        if (this._radians >= 3.1) {
+            this._radians = 3.14;
             return;
         }
 
         this._rotation = Math.PI * 1.5;
         this._radians += 0.1;
+    }
+
+    private getMapIndex(): number {
+        const x = Math.floor(this._position.x / Wall.Width);
+        const y = Math.floor(this._position.y / Wall.Height);
+        return x  + y * this._mapManager.currentMap.data[0].length;
     }
 }

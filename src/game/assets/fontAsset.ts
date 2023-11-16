@@ -26,7 +26,9 @@ export class FontAsset implements IAsset {
                     this._data = font;
                     resolve(true);  
                 })
-                .catch(() => reject(false));
+                .catch(() => {
+                    reject(false);
+                });
         });
     }
 }

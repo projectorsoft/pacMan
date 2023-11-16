@@ -29,6 +29,7 @@ export enum GhostType {
 export enum GhostMode {
     Chase,
     Frightend,
+    FrightendEnding,
     Eaten
 }
 
@@ -96,4 +97,12 @@ export enum Asset {
     PixelCodeFont = 'pixelCodeFont',
     EnTranslations = 'enTranslations',
     PlTranslations = 'plTranslations'
+}
+
+export enum Timers {
+    NewGame = 'newGame',
+    EndGame = 'endGame',
+    NextStage = 'nextStage',
+    BeforeDie = 'beforeDie',
+    AfterDie = 'afterDie',
 }

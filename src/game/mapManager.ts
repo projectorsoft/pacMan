@@ -8,14 +8,18 @@ import { map2 } from "./maps/map2.js";
 import { Pellet } from "./pellet.js";
 import { Point } from "./point.js";
 import { PowerUp } from "./powerUp.js";
+import { SoundsPlayer } from "./soundsPlayer.js";
+import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class MapManager {
     private _assetsManager: AssetsManager;
+    private _soundsPlayer: SoundsPlayer;
+    private _timersManager: TimersManager;
     private _context: CanvasRenderingContext2D;
     private _boundaries: Wall[] = [];
-    private _pellets: Pellet[] = [];
-    private _powerUps: PowerUp[] = [];
+    private _pellets: Map<number, Pellet> = new Map<number, Pellet>();
+    private _powerUps: Map<number, PowerUp> = new Map<number, PowerUp>();
     private _ghosts: Ghost[] = [];
     private _maps: IMap[] = [];
     private _currentMap: IMap = this._maps[0];
@@ -29,11 +33,11 @@ export class MapManager {
         return this._boundaries;
     }
 
-    get pellets(): Pellet[] {
+    get pellets(): Map<number, Pellet> {
         return this._pellets;
     }
 
-    get powerUps(): PowerUp[] {
+    get powerUps(): Map<number, PowerUp> {
         return this._powerUps;
     }
 
@@ -42,9 +46,13 @@ export class MapManager {
     }
 
     constructor(context: CanvasRenderingContext2D,
-        assetsManager: AssetsManager) {
+        assetsManager: AssetsManager,
+        soundsPlayer: SoundsPlayer,
+        timersManager: TimersManager) {
         this._context = context;
         this._assetsManager = assetsManager;
+        this._soundsPlayer = soundsPlayer;
+        this._timersManager = timersManager;
         this._maps = [ map0, map1, map2 ]
         this.init();
     }
@@ -106,10 +114,10 @@ export class MapManager {
                         this._boundaries.push(new Wall(this._context, this._assetsManager, new Point(j * Wall.Width, i * Wall.Height), WallType.Block));
                         break;
                     case '.':
-                        this._pellets.push(new Pellet(this._context, new Point(j * Wall.Width + Wall.Width / 2, i * Wall.Height + Wall.Height / 2)));
+                        this._pellets.set(j  + i * this.currentMap.data[0].length, new Pellet(this._context, new Point(j * Wall.Width + Wall.Width / 2, i * Wall.Height + Wall.Height / 2)));
                         break;
                     case 'p':
-                        this._powerUps.push(new PowerUp(this._context, new Point(j * Wall.Width + Wall.Width / 2, i * Wall.Height + Wall.Height / 2)))
+                        this._powerUps.set(j  + i * this.currentMap.data[0].length, new PowerUp(this._context, new Point(j * Wall.Width + Wall.Width / 2, i * Wall.Height + Wall.Height / 2)))
                         break;
                     case '~':
                         //TODO: draw breaking line
@@ -125,6 +133,8 @@ export class MapManager {
         this._ghosts = this._currentMap.ghostsSettings.map(settings => new Ghost(
             this._context,
             this._assetsManager,
+            this._soundsPlayer,
+            this._timersManager,
             new Point(settings.startPosition.x * Wall.Width + Wall.Width / 2, settings.startPosition.y * Wall.Height + Wall.Height / 2),
             new Point(0, -Ghost.Velocity),
             settings,
@@ -134,8 +144,8 @@ export class MapManager {
 
     private clear(): void {
         this._boundaries.length = 0;
-        this._pellets.length = 0;
-        this._powerUps.length = 0;
+        this._pellets.clear();
+        this._powerUps.clear();
         this.ghosts.length = 0;
     }
 

@@ -1,62 +1,40 @@
 import { AssetsManager } from "./assetsManager.js"
-import { Asset, Color, GameMode, GameState, GhostMode, ScoreType } from "./enums.js"
+import { Asset, Color, GameMode, GameState, Timers } from "./enums.js"
 import { Ghost } from "./ghost.js"
-import { Helpers } from "./helpers.js"
 import { InputManager } from "./inputManager.js"
-import { Label } from "./label.js"
 import { MapManager } from "./mapManager.js"
 import { Menu } from "./menu.js"
 import { Player } from "./player.js"
 import { Point } from "./point.js"
 import { SoundsPlayer } from "./soundsPlayer.js"
+import { TimersManager } from "./timersManager.js"
 import { Placeholder, TranslationsService } from "./translationsService.js"
 import { Wall } from "./wall.js"
 
 export class Game {
     private readonly _fps: number = 25; //TODO: game time
-    private readonly _locale: string = 'pl';
-    private _translations = {};
 
     private _canvas!: HTMLCanvasElement;
     private _context!: CanvasRenderingContext2D;
     private _mapManager!: MapManager;
     private _inputManger!: InputManager;
     private _assetsManager!: AssetsManager;
+    private _timersManager!: TimersManager;
     private _soundsPlayer!: SoundsPlayer;
     private _translationsService!: TranslationsService;
+    private _menu!: Menu;
     private _player!: Player;
+    //private _currentPlayer: number = 0;
 
     private _gameMode: GameMode = GameMode.Menu;
     private _gameState: GameState = GameState.None;
-    private _lives: number = 3;
-    private _score: number = 0;
     private _highScore: number = 0;
-    private _ghostsInPanic: boolean = false;
     private _pause: boolean = false
     private _stopped: boolean = false;
     private _boardWidth: number = 0;
     private _boardHeight: number = 0;
 
-    private _scoreLabel!: Label;
-    private _scoreValueLabel!: Label;
-    private _highScoreLabel!: Label;
-    private _highScoreValueLabel!: Label;
-
-    private _menu!: Menu;
-
     public onGameLoaded!: (result: boolean, reason?: string) => void;
-
-    public get pause(): boolean {
-        return this._pause
-    }
-    public set pause(value: boolean) {
-        this._pause = value
-
-        if (value)
-            this._soundsPlayer.audio.pause();
-        else 
-            this._soundsPlayer.audio.play();
-    }
 
     constructor() {
         this._canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -79,28 +57,36 @@ export class Game {
     }
 
     private initialize(): void {
-        window.onblur = () => { this._soundsPlayer.audio.pause(); this._stopped = true; }
-        window.onfocus = () => { this._soundsPlayer.audio.play(); this._stopped = false; }
+        window.onblur = () => {
+            if (this._gameMode === GameMode.Menu)
+                return;
 
-        this._mapManager = new MapManager(this._context, this._assetsManager);
+            this._soundsPlayer.audio.pause();
+            this._stopped = true;
+        };
+        window.onfocus = () => {
+            if (this._gameMode === GameMode.Menu)
+                return;
+
+            this._soundsPlayer.audio.play();
+            this._stopped = false;
+        };
+
         this._inputManger = new InputManager();
+        this._timersManager = new TimersManager();
         this._soundsPlayer = new SoundsPlayer(this._assetsManager);
         this._translationsService = new TranslationsService(this._assetsManager);
-
-        this._menu = new Menu(this._context, this._inputManger, this._assetsManager, this._translationsService);
-        this._menu.onItemSelected = this.newGame.bind(this);
-        this._menu.highScore = this._highScore;
-
-        this._player = new Player(this._context, 
+        this._mapManager = new MapManager(this._context, this._assetsManager, this._soundsPlayer, this._timersManager);
+        this._player = new Player(
+            this._context, 
             this._mapManager,
             this._inputManger,
-            this._soundsPlayer
+            this._soundsPlayer,
+            this._timersManager
         );
-
-        this._highScoreLabel = new Label(this._context, new Point(640, 30), Color.Red);
-        this._highScoreValueLabel = new Label(this._context, new Point(640, 70), Color.White);
-        this._scoreLabel = new Label(this._context, new Point(640, 110), Color.Red);
-        this._scoreValueLabel = new Label(this._context, new Point(640, 150), Color.White);
+        this._menu = new Menu(this._context, this._inputManger, this._assetsManager, this._translationsService, this._canvas.width, this._canvas.height);
+        this._menu.onItemSelected = this.newGame.bind(this);
+        this._menu.highScore = this._highScore;
 
         this.animate();
     }
@@ -113,6 +99,9 @@ export class Game {
             return;
 
         this._context.clearRect(0, 0, this._canvas.width, this._canvas.height);
+        this._context.fillStyle = 'black';
+        this._context.rect(0, 0, this._canvas.width, this._canvas.height);
+        this._context.fill();
 
         if (this._gameMode === GameMode.Menu) {
             this._soundsPlayer.audio.pause();
@@ -124,99 +113,60 @@ export class Game {
     }
 
     private play(): void {
-        this._highScoreLabel.draw(this._translationsService.getTranslation('highScore', new Placeholder('score', '')));
-        this._highScoreValueLabel.draw(`${this._highScore}`);
-        this._scoreLabel.draw('1 UP');
-        this._scoreValueLabel.draw(`${this._score}`);
-        //lives
-        for (let i = 0; i < this._lives; i++)
-            this._context.drawImage(this._assetsManager.getImage(Asset.PlayerImg), 640 + i * 40, 240, 40, 40); //TODO: computed position based on map size
+        this.drawText(this._translationsService.getTranslation('highScore', new Placeholder('score', '')), new Point(this._boardWidth, 40), Color.Red, 'left');
+        this.drawText(`${this._highScore}`, new Point(this._boardWidth, 80), Color.White, 'left');
+        this.drawText('1 UP', new Point(this._boardWidth, 120), Color.Red, 'left');
+        this.drawText(`${this._player.score}`, new Point(this._boardWidth, 160), Color.White, 'left');
+
+        //life
+        for (let i = 0; i < this._player.life; i++) {
+            const image = this._assetsManager.getImage(Asset.PlayerImg);
+            this._context.drawImage(image, this._boardWidth + i * image.width, 180, image.width, image.width);
+        }
 
         this._mapManager.walls.forEach(wall => {
             wall.draw();
         });
 
-        for (let i = this._mapManager.pellets.length - 1; 0 < i; i--) {
-            const pellet = this._mapManager.pellets[i];
+        this._mapManager.pellets.forEach(pellet => {
             pellet.draw();
+        });
 
-            if (Helpers.hypot(pellet.position.x - this._player.position.x, pellet.position.y - this._player.position.y) < pellet.radius + this._player.radius) {
-                this._mapManager.pellets.splice(i, 1);
-                this._score += ScoreType.Pellet;
-                this._soundsPlayer.play(Asset.ChompAudio);
-            } else  {
-                this._soundsPlayer.play(Asset.AlarmAudio);
-            }
-        }
-
-        for (let i = this._mapManager.powerUps.length - 1; 0 <= i; i--) {
-            const powerup = this._mapManager.powerUps[i];
-            powerup.update();
-            powerup.draw();
-
-            if (Helpers.hypot(powerup.position.x - this._player.position.x, powerup.position.y - this._player.position.y) < powerup.radius + this._player.radius) {
-                this._mapManager.powerUps.splice(i, 1);
-                this._ghostsInPanic = true;
-                this._score += ScoreType.PowerUp;
-                this._soundsPlayer.play(Asset.PanicAudio);
-
-                setTimeout(() => {
-                    this._ghostsInPanic = false;
-                    Ghost.GhostsEaten = 0;
-                    this._soundsPlayer.play(Asset.AlarmAudio);
-                }, 7000); 
-            }
-        }
+        this._mapManager.powerUps.forEach(powerUp => {
+            powerUp.update();
+            powerUp.draw();
+        });
 
         this._player.draw();
 
         for (let i = this._mapManager.ghosts.length - 1; 0 <= i; i--) {
             const ghost = this._mapManager.ghosts[i];
 
-            if (this._ghostsInPanic) {
-                if (ghost.mode !== GhostMode.Eaten && ghost.canBeFrightend)
-                    ghost.mode = GhostMode.Frightend;
-            } else {
-                ghost.canBeFrightend = true;
-                if (ghost.mode !== GhostMode.Eaten)
-                    ghost.mode = GhostMode.Chase;
-            }
-
-            if (!this._pause && this._lives > 0) {
+            if (!this._pause && this._player.life > 0) {
                 ghost.move(this._mapManager.walls, this._mapManager.currentMap.respawnPoint, this._player);
                 ghost.update();
             }
 
             ghost.draw();
-            
-            if (ghost.mode === GhostMode.Eaten)
-                continue;
-
-            if (!this._player.isKilled) {
-                if (Helpers.hypot(ghost.position.x - this._player.position.x, ghost.position.y - this._player.position.y) < ghost.radius / 2 + this._player.radius / 2) {
-                    if (ghost.mode === GhostMode.Frightend) {
-                        this._score += ScoreType.Ghost;
-                        ghost.mode = GhostMode.Eaten;
-                        this._soundsPlayer.play(Asset.GhostEatenAudio);
-                    } else if (ghost.mode === GhostMode.Chase) {
-                        this._player.isKilled = true;
-                        this._lives--;
-                        break;
-                    }
-                }
-            }
         }
 
-        if (!this._pause && this._lives >= 0)
+        if (!this._pause && this._player.life >= 0)
             this._player.update();
 
         this.checkGameState();
         this.drawGameState();
     }
 
-    private newGame(): void {
+    private newGame(twoPlayersMode: boolean): void {
         if (this._gameMode !== GameMode.Menu)
             return;
+
+        this._player = new Player(this._context, 
+            this._mapManager,
+            this._inputManger,
+            this._soundsPlayer,
+            this._timersManager
+        );
 
         this._pause = true;
         this._gameState = GameState.Ready;
@@ -226,13 +176,12 @@ export class Game {
         this._mapManager.init();
         this._soundsPlayer.play(Asset.NewGameAudio);
         
-        const id = setTimeout(() => {
+        this._timersManager.addTimer(Timers.NewGame, () => {
             this._gameState = GameState.Play;
             this._pause = false;
             this._player.respawn();
-            this._lives = 2;
-            this._score = 0;
-            clearTimeout(id);
+            this._player.life = 3;
+            this._player.score = 0;
         }, 4500);
     }
 
@@ -243,12 +192,13 @@ export class Game {
 
         this._gameState = gameState;
         this._menu.reset();
+        this._pause = true;
 
-        const id = setTimeout(() => {
+        this._timersManager.addTimer(Timers.EndGame, () => {
             this._pause = true;
             this._mapManager.init();
-            if (this._score > this._highScore)
-                this._highScore = this._score;
+            if (this._player.score > this._highScore)
+                this._highScore = this._player.score;
 
             this._menu.highScore = this._highScore;
 
@@ -257,7 +207,6 @@ export class Game {
             this._gameMode = GameMode.Menu;
             this._gameState = GameState.None;
             this._player.respawn();
-            clearTimeout(id);
         }, 1200);
     }
 
@@ -273,15 +222,15 @@ export class Game {
             return;
 
         this._pause = true;
-        this._boardHeight = this._mapManager.currentMap.data.length * Wall.Width;
-        this._boardWidth = this._mapManager.currentMap.data[0].length * Wall.Height;
 
         //Wait 3 secs
-        setTimeout(() => {
+        this._timersManager.addTimer(Timers.NextStage, () => {
             this._mapManager.nextMap();
+            this._boardHeight = this._mapManager.currentMap.data.length * Wall.Width;
+            this._boardWidth = this._mapManager.currentMap.data[0].length * Wall.Height;
             this._mapManager.ghosts.forEach(ghost => {
-                ghost.isHidden = false;
                 ghost.restart();
+                ghost.isHidden = false;
             });
             this._player.respawn();
             this._pause = false;
@@ -289,21 +238,16 @@ export class Game {
     }
 
     private checkGameState(): void {
-        this._mapManager.ghosts.forEach(ghost => {
-            if (this._player.isKilled) {
-                this._ghostsInPanic = false;
-                ghost.restart();
-            }
-            else
-                ghost.isHidden = false;
-        });
+        if (this._timersManager.exists(Timers.BeforeDie) || 
+            this._timersManager.exists(Timers.AfterDie))
+            return;
 
-        if (this._lives === 0) {
+        if (this._player.life === 0) {
             this.endGame(GameState.GameOver);
             return;
         }
 
-        if (this._mapManager.pellets.length - 1 === 0) {
+        if (this._mapManager.pellets.size === 0) {
             if (this._mapManager.isLastMap()) {
                 this.endGame(GameState.Finished);
                 return;
@@ -337,10 +281,10 @@ export class Game {
         }
     }
 
-    private drawText(text: string, position: Point, color: string = Color.White): void {
+    private drawText(text: string, position: Point, color: string = Color.White, align: CanvasTextAlign = 'center'): void {
         this._context.font = '32px PixelCode';
         this._context.fillStyle = color;
-        this._context.textAlign = 'center';
+        this._context.textAlign = align;
         this._context.fillText(text, position.x, position.y, 1000);
     }
 }

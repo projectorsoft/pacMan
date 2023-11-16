@@ -16,18 +16,24 @@ export class Menu {
     private _items: MenuItem[] = [];
     private _selectedIndex: number = 0;
     private _alpha: number = 0;
+    private _canvasWidth: number = 0;
+    private _canvasHeight: number = 0;
     public highScore: number = 0;
 
-    public onItemSelected: () => void;
+    public onItemSelected: (twoPlayersMode: boolean) => void;
 
     constructor(context: CanvasRenderingContext2D,
         inputManager: InputManager,
         assetsManager: AssetsManager,
-        translationsService: TranslationsService) {
+        translationsService: TranslationsService,
+        canvasWidth: number,
+        canvasHeight: number) {
             this._context = context;
             this._inputManager = inputManager;
             this._inputManager.onKeyUp = this.onKeyUp.bind(this);
             this._translationsService = translationsService;
+            this._canvasWidth = canvasWidth;
+            this._canvasHeight = canvasHeight;
 
             this._logoImg = assetsManager.getImage(Asset.LogoImg) as ImageBitmap;
             this.onItemSelected = () => null;
@@ -58,25 +64,33 @@ export class Menu {
 
     public draw(): void {
         this._items.forEach(item => {
-            item.position.x = this._xOffset + 400;
-            this.drawText(item.text, item.position);
+            item.position.x = this._xOffset + this._canvasWidth / 2 - this._logoImg.width / 4;
+            this.drawText(item.text, item.position, Color.White);
         });
 
-        this._context.drawImage(this._logoImg, this._xOffset + (1000 - this._logoImg.width) / 2, this._yOffset);
+        this._context.drawImage(this._logoImg, this._xOffset + (this._canvasWidth - this._logoImg.width) / 2, this._yOffset);
 
         if (this._animationStoped) {
             this.drawSelector();
 
-            this.drawText(this._translationsService.getTranslation('highScore', new Placeholder('score', this.highScore.toString())), new Point((1150 - this._logoImg.width) / 2, 100), Color.Red);
-            this.drawText(this._translationsService.getTranslation('pressEnter'), new Point((970 - this._logoImg.width) / 2, this._yOffset + 300), Helpers.addAlphaValueToColor(Color.White, this._alpha));
+            let text = this._translationsService.getTranslation('highScore', new Placeholder('score', this.highScore.toString()));
+            this.drawText(text, new Point(this.getTextCenterPosition(text), 100), Color.Red);
+
+            text = this._translationsService.getTranslation('pressEnter');
+            this.drawText(text, new Point(this.getTextCenterPosition(text), this._yOffset + 300), Helpers.addAlphaValueToColor(Color.Red, this._alpha));
         }
     }
 
-    private drawText(text: string, position: Point, color: string = Color.White): void {
+    private getTextCenterPosition(text: string): number {
+        const textLength = this._context.measureText(text).width;
+        return (this._canvasWidth - textLength) / 2;
+    }
+
+    private drawText(text: string, position: Point, color: string = Color.White, textAlign: CanvasTextAlign = 'left'): void {
         this._context.font = '32px PixelCode';
         this._context.fillStyle = color;
-        this._context.textAlign = 'left';
-        this._context.fillText(text, position.x, position.y, 1000);
+        this._context.textAlign = textAlign;
+        this._context.fillText(text, position.x, position.y, this._canvasWidth);
     }
 
     private drawSelector(): void {
@@ -112,7 +126,7 @@ export class Menu {
         switch (this._inputManager.lastKey) {
             case Keys.Enter:
                 if (this.onItemSelected)
-                    this.onItemSelected();
+                    this.onItemSelected(this._selectedIndex > 0);
                 break;
             case Keys.Up:
                 this._selectedIndex = this._selectedIndex - 1;
