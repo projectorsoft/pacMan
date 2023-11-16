@@ -107,6 +107,7 @@ export class Ghost implements ICircleBasedSprite {
                     //situation when next power up has been eaten and previous one is still ticking
                     if (this._timersManager.exists(`${this._type}_${this.mode}`)) {
                         this._timersManager.delete(`${this._type}_${this.mode}`);
+                        Ghost.GhostsEaten = 0;
                     }
 
                     let counter: number = 0;

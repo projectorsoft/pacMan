@@ -23,7 +23,7 @@ export class  Timer {
 
     public pause(): void {
         clearTimeout(this._timerId);
-        this._remaining -= new Date().getTime() - this._startDate.getTime();
+        this._remaining -= (new Date().getTime() - this._startDate.getTime());
         //console.log(this._name, this._remaining);
     }
 
