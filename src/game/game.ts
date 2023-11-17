@@ -12,7 +12,7 @@ import { Placeholder, TranslationsService } from "./translationsService.js"
 import { Wall } from "./wall.js"
 
 export class Game {
-    private readonly _fps: number = 25; //TODO: game time
+    private readonly _fps: number = 60;
 
     private _canvas!: HTMLCanvasElement;
     private _context!: CanvasRenderingContext2D;
@@ -24,7 +24,6 @@ export class Game {
     private _translationsService!: TranslationsService;
     private _menu!: Menu;
     private _player!: Player;
-    //private _currentPlayer: number = 0;
 
     private _gameMode: GameMode = GameMode.Menu;
     private _gameState: GameState = GameState.None;
@@ -95,8 +94,7 @@ export class Game {
     }
 
     private animate(): void {
-        setTimeout(() => requestAnimationFrame(() => this.animate()), 
-            1000 / this._fps);
+        setTimeout(() => requestAnimationFrame(() => this.animate()), 1000 / this._fps);
 
         if (this._stopped)
             return;
@@ -160,7 +158,7 @@ export class Game {
         this.drawGameState();
     }
 
-    private newGame(twoPlayersMode: boolean): void {
+    private newGame(): void {
         if (this._gameMode !== GameMode.Menu)
             return;
 

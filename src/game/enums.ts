@@ -1,6 +1,5 @@
 export enum GameMode {
     Menu,
-    Intro,
     Play
 }
 
@@ -38,11 +37,6 @@ export enum ScoreType {
     PowerUp = 50,
     Cherry = 100,
     Ghost = 200
-}
-
-export enum ObstacleType {
-    Wall,
-    Entrance //Entrance to ghosts house
 }
 
 export enum Keys {

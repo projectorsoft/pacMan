@@ -20,7 +20,7 @@ export class Menu {
     private _canvasHeight: number = 0;
     public highScore: number = 0;
 
-    public onItemSelected: (twoPlayersMode: boolean) => void;
+    public onItemSelected: () => void;
 
     constructor(context: CanvasRenderingContext2D,
         inputManager: InputManager,
@@ -126,7 +126,7 @@ export class Menu {
         switch (this._inputManager.lastKey) {
             case Keys.Enter:
                 if (this.onItemSelected)
-                    this.onItemSelected(this._selectedIndex > 0);
+                    this.onItemSelected();
                 break;
             case Keys.Up:
                 this._selectedIndex = this._selectedIndex - 1;

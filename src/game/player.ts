@@ -11,7 +11,7 @@ import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Player implements ICircleBasedSprite {
-    public static Velocity: number = 4;
+    public static Velocity: number = 3;
 
     private _context: CanvasRenderingContext2D;
     private _position: Point;
@@ -259,7 +259,7 @@ export class Player implements ICircleBasedSprite {
                 const ghost = this._mapManager.ghosts[i];
 
                 if (Helpers.hypot(ghost.position.x - this.position.x, ghost.position.y - this.position.y) < ghost.radius / 2 + this.radius / 2) {
-                    if (ghost.mode === GhostMode.Frightend) {
+                    if (ghost.mode === GhostMode.Frightend || ghost.mode === GhostMode.FrightendEnding) {
                         this.score += ScoreType.Ghost;
                         ghost.mode = GhostMode.Eaten;
                         this._soundsPlayer.play(Asset.GhostEatenAudio);

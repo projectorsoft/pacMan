@@ -11,7 +11,7 @@ import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Ghost implements ICircleBasedSprite {
-    public static Velocity: number = 4;
+    public static Velocity: number = 3;
     public static GhostsEaten: number = 0;
 
     private _context: CanvasRenderingContext2D;
@@ -411,6 +411,8 @@ export class Ghost implements ICircleBasedSprite {
         if (this._timersManager.exists(`${this._type}_${GhostMode.Frightend}`)) {
             this._timersManager.delete(`${this._type}_${GhostMode.Frightend}`);
         }
+
+        Ghost.GhostsEaten = 0;
 
         this._isHidden = true;
         this._velocity = new Point(0, 0);
