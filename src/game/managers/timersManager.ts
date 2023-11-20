@@ -1,4 +1,4 @@
-import { Timer } from "./timer";
+import { Timer } from "../timer";
 
 export class TimersManager {
     private _timers: { [name: string]: Timer | undefined } = {};

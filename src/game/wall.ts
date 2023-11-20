@@ -1,6 +1,6 @@
 import { IRectangleBasedSprite } from "./IColidableObject.js";
-import { AssetsManager } from "./assetsManager.js";
 import { Asset, WallType } from "./enums.js";
+import { AssetsManager } from "./managers/assetsManager.js";
 import { Point } from "./point.js";
 
 export class Wall implements IRectangleBasedSprite {

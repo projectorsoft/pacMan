@@ -1,13 +1,13 @@
 import { ICircleBasedSprite } from "./IColidableObject.js";
-import { Asset, Color, GhostMode, Keys, ScoreType, Timers } from "./enums.js";
-import { Helpers } from "./helpers.js";
-import { InputManager } from "./inputManager.js";
-import { MapManager } from "./mapManager.js";
+import { Asset, Color, Direction, GhostMode, Keys, ScoreType, Timers } from "./enums.js";
+import { Helpers } from "./helpers/helpers.js";
+import { InputManager } from "./managers/inputManager.js";
+import { MapManager } from "./managers/mapManager.js";
 import { Pellet } from "./pellet.js";
 import { Point } from "./point.js";
 import { PowerUp } from "./powerUp.js";
-import { SoundsPlayer } from "./soundsPlayer.js";
-import { TimersManager } from "./timersManager.js";
+import { SoundsPlayer } from "./managers/soundsPlayer.js";
+import { TimersManager } from "./managers/timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Player implements ICircleBasedSprite {
@@ -103,6 +103,7 @@ export class Player implements ICircleBasedSprite {
         this._position = new Point(Wall.Width + Wall.Width / 2, Wall.Height + Wall.Height / 2);
         this._velocity = new Point(0, 0);
         this._inputManager = inputManager;
+        this._inputManager.onTouch = this.onTouch.bind(this);
         this._mapManager = mapManager;
         this._soundsPlayer = soundsPlayer;
         this._timersManager = timersManager;
@@ -166,46 +167,80 @@ export class Player implements ICircleBasedSprite {
         this._radians = 2 * Math.PI;
     }
 
+    private _lastTouchCoordinates: Point | undefined = undefined;
+    private _direction: Direction | undefined = undefined;
+
+    private onTouch(lastTouchPoint: Point): void {
+        if (this._inputManager.isKeyPressed(Keys.Tap) && this._inputManager.lastKey === Keys.Tap)
+            this._lastTouchCoordinates = lastTouchPoint;
+
+        if (Helpers.hasTouchScreen()) {
+            if (!this._lastTouchCoordinates) {
+                this._direction = undefined;
+                return;
+            }
+
+            const xDist = Math.abs(this._lastTouchCoordinates.x - this.position.x);
+            const yDist = Math.abs(this._lastTouchCoordinates.y - this.position.y);
+
+            if (xDist > yDist + 40) {
+                if (this._lastTouchCoordinates.x - this.position.x < 0)
+                    this._direction = Direction.Left;
+                else
+                    this._direction = Direction.Right;
+            } else {
+                if (this._lastTouchCoordinates.y - this.position.y < 0)
+                    this._direction = Direction.Top;
+                else
+                    this._direction = Direction.Down;
+            }
+        }
+    }
+
     private handleKeys(): void {
         if (this._isBusy || this._isKilled)
             return;
 
-        if (this._inputManager.isKeyPressed(Keys.Up) && this._inputManager.lastKey === Keys.Up) {
+        if (this._direction === Direction.Top || this._inputManager.isKeyPressed(Keys.Up) && this._inputManager.lastKey === Keys.Up) {
             for (let i = 0; i < this._mapManager.walls.length; i++) {
                 const wall = this._mapManager.walls[i];
 
                 if (Helpers.isColliding(this, wall, new Point(0, -Player.Velocity))) {
                     this._velocity.y = 0;
+                    this._lastTouchCoordinates = undefined;
                     break;
                 } else
                     this._velocity.y = -Player.Velocity;
             }
-        } else if (this._inputManager.isKeyPressed(Keys.Left) && this._inputManager.lastKey === Keys.Left) {
+        } else if (this._direction === Direction.Left || this._inputManager.isKeyPressed(Keys.Left) && this._inputManager.lastKey === Keys.Left) {
             for (let i = 0; i < this._mapManager.walls.length; i++) {
                 const wall = this._mapManager.walls[i];
 
                 if (Helpers.isColliding(this, wall, new Point(-Player.Velocity, 0))) {
                     this._velocity.x = 0;
+                    this._lastTouchCoordinates = undefined;
                     break;
                 } else
                     this._velocity.x = -Player.Velocity;
             }
-        } else if (this._inputManager.isKeyPressed(Keys.Down) && this._inputManager.lastKey === Keys.Down) {
+        } else if (this._direction === Direction.Down || this._inputManager.isKeyPressed(Keys.Down) && this._inputManager.lastKey === Keys.Down) {
             for (let i = 0; i < this._mapManager.walls.length; i++) {
                 const wall = this._mapManager.walls[i];
 
                 if (Helpers.isColliding(this, wall, new Point(0, Player.Velocity))) {
                     this._velocity.y = 0;
+                    this._lastTouchCoordinates = undefined;
                     break;
                 } else
                     this._velocity.y = Player.Velocity;
             }
-        } else if (this._inputManager.isKeyPressed(Keys.Right) && this._inputManager.lastKey === Keys.Right) {
+        } else if (this._direction === Direction.Right || this._inputManager.isKeyPressed(Keys.Right) && this._inputManager.lastKey === Keys.Right) {
             for (let i = 0; i < this._mapManager.walls.length; i++) {
                 const wall = this._mapManager.walls[i];
 
                 if (Helpers.isColliding(this, wall, new Point(Player.Velocity, 0))) {
                     this._velocity.x = 0;
+                    this._lastTouchCoordinates = undefined;
                     break;
                 } else
                     this._velocity.x = Player.Velocity;

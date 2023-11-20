@@ -1,13 +1,13 @@
 import { ICircleBasedSprite } from "./IColidableObject.js";
 import { IGhostSettings } from "./IGhostSettings.js";
-import { AssetsManager } from "./assetsManager.js";
 import { Asset, Color, Direction, GhostMode, GhostType } from "./enums.js";
-import { Helpers } from "./helpers.js";
+import { Helpers } from "./helpers/helpers.js";
+import { AssetsManager } from "./managers/assetsManager.js";
+import { SoundsPlayer } from "./managers/soundsPlayer.js";
+import { TimersManager } from "./managers/timersManager.js";
 import { IMap } from "./maps/IMap.js";
 import { Player } from "./player.js";
 import { Point } from "./point.js";
-import { SoundsPlayer } from "./soundsPlayer.js";
-import { TimersManager } from "./timersManager.js";
 import { Wall } from "./wall.js";
 
 export class Ghost implements ICircleBasedSprite {

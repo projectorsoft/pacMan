@@ -25,14 +25,6 @@ export default defineComponent({
       message: ''
     }
   },
-  /* computed: {
-    getWidth(): number {
-      return window.innerWidth
-    },
-    getHeight(): number {
-      return window.innerHeight
-    }
-  }, */
   mounted() {
     const game = new Game()
     game.onGameLoaded = this.onGameLoaded
@@ -60,7 +52,5 @@ export default defineComponent({
 #canvas {
   width: 840px; 
   display: block;
-  margin-left: auto;
-  margin-right: auto; 
 }
 </style>

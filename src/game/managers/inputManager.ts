@@ -1,14 +1,21 @@
-import { Keys } from "./enums";
+import { Keys } from "../enums";
+import { Helpers } from "../helpers/helpers";
+import { Point } from "../point";
 
 export class InputManager {
     private _keys: {[key: number]: boolean} = {};
     private _lastKey: Keys = Keys.None;
+    private _lastTouchCoordinates: Point = new Point(0, 0);
 
     public onKeyUp: () => void;
     public onKeyDown: () => void;
+    public onTouch: (lastTouchPoint: Point, currentTouchPoint: Point) => void;
 
     get lastKey(): Keys {
         return this._lastKey;
+    }
+    public get lastTouchCoordinates(): Point {
+        return this._lastTouchCoordinates;
     }
 
     public constructor() {
@@ -18,15 +25,40 @@ export class InputManager {
         this._keys[Keys.Down] = false;
         this._keys[Keys.Enter] = false;
 
-        this.registerKeyDown();
-        this.registerKeyUp();
+        if (Helpers.hasTouchScreen()) {
+            window.addEventListener('touchmove', (event: TouchEvent) => this.registerTouchEvents(event, true));
+            window.addEventListener('touchstart', (event: TouchEvent) => this.registerTouchEvents(event, true));
+            //window.addEventListener('touchend', (event: TouchEvent) => this.setKeyPressed(Keys.Tap, false));
+        } else {
+            this.registerKeyDown();
+            this.registerKeyUp();
+        }
 
         this.onKeyUp = () => null;
-        this.onKeyDown = () => null; 
+        this.onKeyDown = () => null;
+        this.onTouch = () => null; 
     }
 
     public isKeyPressed(key: Keys): boolean {
         return this._keys[key];
+    }
+
+    registerTouchEvents(event: TouchEvent, pressed: boolean): void {
+        const currentPos: Point = new Point(0, 0);
+
+        if (event.touches && event.touches[0]) {
+            currentPos.x = event.touches[0].clientX;
+            currentPos.y = event.touches[0].clientY;
+        }
+        
+        //console.log(event)
+        this.setKeyPressed(Keys.Tap, pressed);
+        
+        if (this.onTouch)
+            this.onTouch(this._lastTouchCoordinates, currentPos);
+
+        this._lastTouchCoordinates.x = currentPos.x;
+        this._lastTouchCoordinates.y = currentPos.y;
     }
 
     private registerKeyDown(): void {

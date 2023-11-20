@@ -1,6 +1,6 @@
 import { ICircleBasedSprite } from "./IColidableObject";
 import { Color } from "./enums";
-import { Helpers } from "./helpers";
+import { Helpers } from "./helpers/helpers";
 import { Point } from "./point";
 
 export class PowerUp implements ICircleBasedSprite {

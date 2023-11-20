@@ -1,16 +1,16 @@
 import { AssetsManager } from "./assetsManager.js";
-import { WallType } from "./enums.js";
-import { Ghost } from "./ghost.js";
-import { IMap } from "./maps/IMap.js";
-import { map0 } from "./maps/map0.js";
-import { map1 } from "./maps/map1.js";
-import { map2 } from "./maps/map2.js";
-import { Pellet } from "./pellet.js";
-import { Point } from "./point.js";
-import { PowerUp } from "./powerUp.js";
+import { WallType } from "../enums.js";
+import { Ghost } from "../ghost.js";
+import { IMap } from "../maps/IMap.js";
+import { map0 } from "../maps/map0.js";
+import { map1 } from "../maps/map1.js";
+import { map2 } from "../maps/map2.js";
+import { Pellet } from "../pellet.js";
+import { Point } from "../point.js";
+import { PowerUp } from "../powerUp.js";
 import { SoundsPlayer } from "./soundsPlayer.js";
 import { TimersManager } from "./timersManager.js";
-import { Wall } from "./wall.js";
+import { Wall } from "../wall.js";
 
 export class MapManager {
     private _assetsManager: AssetsManager;

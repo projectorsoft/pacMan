@@ -1,7 +1,7 @@
-import { ICircleBasedSprite, IRectangleBasedSprite } from "./IColidableObject.js";
-import { Color } from "./enums.js";
-import { Point } from "./point.js";
-import { Wall } from "./wall.js";
+import { ICircleBasedSprite, IRectangleBasedSprite } from "../IColidableObject.js";
+import { Color } from "../enums.js";
+import { Point } from "../point.js";
+import { Wall } from "../wall.js";
 
 export class Helpers {
     private static paddingFactor: number[] = [
@@ -28,5 +28,9 @@ export class Helpers {
     
     public static addAlphaValueToColor(color: Color, alphaValue: number): string {
         return color.replace(')', `, ${alphaValue})`);
+    }
+
+    public static hasTouchScreen(): boolean {
+        return 'ontouchstart' in window;
     }
 }

@@ -45,7 +45,8 @@ export enum Keys {
     Right = 39,
     Up = 38,
     Down = 40,
-    Enter = 13
+    Enter = 13,
+    Tap = 9999
 }
 
 export enum WallType {

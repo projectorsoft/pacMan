@@ -1,5 +1,5 @@
 import { AssetsManager } from "./assetsManager";
-import { Asset } from "./enums";
+import { Asset } from "../enums";
 
 export class TranslationsService {
     private _assetsManager: AssetsManager;

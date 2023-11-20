@@ -1,9 +1,9 @@
-import { AssetsManager } from "./assetsManager";
 import { Asset, Color, Keys } from "./enums";
-import { Helpers } from "./helpers";
-import { InputManager } from "./inputManager";
+import { Helpers } from "./helpers/helpers";
+import { AssetsManager } from "./managers/assetsManager";
+import { InputManager } from "./managers/inputManager";
+import { Placeholder, TranslationsService } from "./managers/translationsService";
 import { Point } from "./point.js";
-import { Placeholder, TranslationsService } from "./translationsService";
 
 export class Menu {
     private _context: CanvasRenderingContext2D;
@@ -31,6 +31,7 @@ export class Menu {
             this._context = context;
             this._inputManager = inputManager;
             this._inputManager.onKeyUp = this.onKeyUp.bind(this);
+            this._inputManager.onTouch = this.onKeyUp.bind(this);
             this._translationsService = translationsService;
             this._canvasWidth = canvasWidth;
             this._canvasHeight = canvasHeight;
@@ -76,7 +77,11 @@ export class Menu {
             let text = this._translationsService.getTranslation('highScore', new Placeholder('score', this.highScore.toString()));
             this.drawText(text, new Point(this.getTextCenterPosition(text), 100), Color.Red);
 
-            text = this._translationsService.getTranslation('pressEnter');
+            if (Helpers.hasTouchScreen())
+                text = this._translationsService.getTranslation('tap');
+            else
+                text = this._translationsService.getTranslation('pressEnter');
+
             this.drawText(text, new Point(this.getTextCenterPosition(text), this._yOffset + 300), Helpers.addAlphaValueToColor(Color.Red, this._alpha));
         }
     }
@@ -125,6 +130,7 @@ export class Menu {
 
         switch (this._inputManager.lastKey) {
             case Keys.Enter:
+            case Keys.Tap:
                 if (this.onItemSelected)
                     this.onItemSelected();
                 break;
