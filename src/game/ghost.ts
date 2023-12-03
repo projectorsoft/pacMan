@@ -11,7 +11,7 @@ import { Point } from "./point.js";
 import { Wall } from "./wall.js";
 
 export class Ghost implements ICircleBasedSprite {
-    public static Velocity: number = 3;
+    public static Velocity: number = Helpers.hasTouchScreen() ? 2 : 3;
     public static GhostsEaten: number = 0;
 
     private _context: CanvasRenderingContext2D;
@@ -36,6 +36,7 @@ export class Ghost implements ICircleBasedSprite {
     private _changeToOppositeDirection: boolean = false;
     private _minDstance: number = 999999;
     private _forceMoveRandomly: boolean = false;
+    private _respawnDirection: Direction = Direction.Top;
 
     private _allDirections: Direction[] = [Direction.Left, Direction.Right, Direction.Top, Direction.Down];
     private _currentDirection: number = Direction.Top;
@@ -153,6 +154,7 @@ export class Ghost implements ICircleBasedSprite {
         this.setGhostType();
         this._image = assetsManager.getImage(Asset.GhostsImg);
         this._mapSize = map.data[0].length;
+        this._respawnDirection = map.respawnDirection;
 
         this._timersManager.addTimer(`${this._type}_respawn`, () => {
             this._velocity = velocity;
@@ -187,7 +189,7 @@ export class Ghost implements ICircleBasedSprite {
 
         /* this._context.font = '12px Georgia';
         this._context.fillStyle = '#fff';
-        this._context.fillText(`(${ this._forceMoveRandomly } )`, this._position.x - 15, this._position.y - 20); */
+        this._context.fillText(`(${this._mode} => ${ this._forceMoveRandomly } )`, this._position.x - 15, this._position.y - 20); */
 
         this._context.closePath();
     }
@@ -404,6 +406,7 @@ export class Ghost implements ICircleBasedSprite {
         this._velocity = new Point(0, -Ghost.Velocity);
         this._position.x = Wall.Width * respawnPoint.x + Wall.Width / 2;
         this._position.y = Wall.Height * respawnPoint.y + Wall.Height / 2;
+        this._currentDirection = this._respawnDirection;
     }
 
     //when PacMan eaten by Ghost
@@ -456,7 +459,7 @@ export class Ghost implements ICircleBasedSprite {
                 return Ghost.Velocity;
             case GhostMode.Frightend:
             case GhostMode.FrightendEnding:
-                return Ghost.Velocity - 2;
+                return Ghost.Velocity - 1;
             case GhostMode.Eaten:
                 return Ghost.Velocity + 5;
             default: throw `Not supported ghodt mode ${this._mode}`;

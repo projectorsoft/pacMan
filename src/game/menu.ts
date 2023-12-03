@@ -122,6 +122,9 @@ export class Menu {
         });
 
         this._animationStoped = false;
+
+        this._inputManager.onKeyUp = this.onKeyUp.bind(this);
+        this._inputManager.onTouch = this.onKeyUp.bind(this);
     }
 
     private onKeyUp(): void {

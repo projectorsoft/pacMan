@@ -33,6 +33,7 @@ export const map0: IMap = {
         ['4', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '3'],
     ],
     respawnPoint: new Point(10, 12),
+    respawnDirection: Direction.Top,
     ghostsSettings: [
         { 
             type: GhostType.Blinky,

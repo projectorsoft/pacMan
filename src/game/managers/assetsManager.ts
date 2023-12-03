@@ -10,26 +10,9 @@ import { EnvironmentHelper } from "../helpers/environmentHelper";
 export class AssetsManager {
     //private _assets: Record<string, IAsset> = {};
     private _assets: IAsset[] = [];
-    private readonly _path = EnvironmentHelper.isDevelopment ? './src/' : './';
+    public static readonly Path = EnvironmentHelper.isDevelopment ? './src/' : './';
 
     public constructor() {
-        this.addTranslationAsset(Asset.PlTranslations, `${this._path}assets/translations/pl.json`);
-        this.addTranslationAsset(Asset.EnTranslations, `${this._path}assets/translations/en.json`);
-
-        this.addImageAsset(Asset.LogoImg, `${this._path}assets/images/logo.png`);
-        this.addImageAsset(Asset.WallsImg, `${this._path}assets/images/walls.png`);
-        this.addImageAsset(Asset.GhostsImg, `${this._path}assets/images/ghosts.png`);
-        this.addImageAsset(Asset.PlayerImg, `${this._path}assets/images/player.png`);
-
-        this.addAudioAsset(Asset.NewGameAudio, `${this._path}assets/sounds/newGame.wav`);
-        this.addAudioAsset(Asset.ChompAudio, `${this._path}assets/sounds/chomp.wav`);
-        this.addAudioAsset(Asset.DeathAudio, `${this._path}assets/sounds/death.wav`);
-        this.addAudioAsset(Asset.PanicAudio, `${this._path}assets/sounds/panic.wav`);
-        this.addAudioAsset(Asset.AlarmAudio, `${this._path}assets/sounds/alarm.wav`);
-        this.addAudioAsset(Asset.RetreatingAudio, `${this._path}assets/sounds/retreating.wav`);
-        this.addAudioAsset(Asset.GhostEatenAudio, `${this._path}assets/sounds/ghostEaten.wav`);
-
-        this.addFontAsset(Asset.PixelCodeFont, `${this._path}assets/fonts/pixelCode.woff`);
     }
 
     public addTranslationAsset(name: Asset, path: string) {

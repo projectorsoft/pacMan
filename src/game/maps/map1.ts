@@ -27,6 +27,7 @@ export const map1: IMap = {
         ['4', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '-', '3'],
     ],
     respawnPoint: new Point(7, 9),
+    respawnDirection: Direction.Top,
     ghostsSettings: [
         { 
             type: GhostType.Blinky,

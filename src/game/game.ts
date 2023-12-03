@@ -42,6 +42,7 @@ export class Game {
         this.drawText('Loading assets...', new Point(window.innerWidth / 2, window.innerHeight / 2))
 
         this._assetsManager = new AssetsManager();
+        this.addAssets();
         this._assetsManager.loadAll()
         .then(() => {
             if (this.onGameLoaded)
@@ -287,5 +288,25 @@ export class Game {
         this._context.fillStyle = color;
         this._context.textAlign = align;
         this._context.fillText(text, position.x, position.y, 1000);
+    }
+
+    private addAssets(): void {
+        this._assetsManager.addTranslationAsset(Asset.PlTranslations, `${AssetsManager.Path}assets/translations/pl.json`);
+        this._assetsManager.addTranslationAsset(Asset.EnTranslations, `${AssetsManager.Path}assets/translations/en.json`);
+
+        this._assetsManager.addImageAsset(Asset.LogoImg, `${AssetsManager.Path}assets/images/logo.png`);
+        this._assetsManager.addImageAsset(Asset.WallsImg, `${AssetsManager.Path}assets/images/walls.png`);
+        this._assetsManager.addImageAsset(Asset.GhostsImg, `${AssetsManager.Path}assets/images/ghosts.png`);
+        this._assetsManager.addImageAsset(Asset.PlayerImg, `${AssetsManager.Path}assets/images/player.png`);
+
+        this._assetsManager.addAudioAsset(Asset.NewGameAudio, `${AssetsManager.Path}assets/sounds/newGame.wav`);
+        this._assetsManager.addAudioAsset(Asset.ChompAudio, `${AssetsManager.Path}assets/sounds/chomp.wav`);
+        this._assetsManager.addAudioAsset(Asset.DeathAudio, `${AssetsManager.Path}assets/sounds/death.wav`);
+        this._assetsManager.addAudioAsset(Asset.PanicAudio, `${AssetsManager.Path}assets/sounds/panic.wav`);
+        this._assetsManager.addAudioAsset(Asset.AlarmAudio, `${AssetsManager.Path}assets/sounds/alarm.wav`);
+        this._assetsManager.addAudioAsset(Asset.RetreatingAudio, `${AssetsManager.Path}assets/sounds/retreating.wav`);
+        this._assetsManager.addAudioAsset(Asset.GhostEatenAudio, `${AssetsManager.Path}assets/sounds/ghostEaten.wav`);
+
+        this._assetsManager.addFontAsset(Asset.PixelCodeFont, `${AssetsManager.Path}assets/fonts/pixelCode.woff`);
     }
 }
