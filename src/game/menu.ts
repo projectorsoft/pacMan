@@ -65,11 +65,12 @@ export class Menu {
 
     public draw(): void {
         this._items.forEach(item => {
-            item.position.x = this._xOffset + this._canvasWidth / 2 - this._logoImg.width / 4;
+            item.position.x = this._xOffset + this.getTextCenterPosition(item.text);
             this.drawText(item.text, item.position, Color.White);
         });
-
+        this._context.save();
         this._context.drawImage(this._logoImg, this._xOffset + (this._canvasWidth - this._logoImg.width) / 2, this._yOffset);
+        this._context.restore();
 
         if (this._animationStoped) {
             this.drawSelector();
@@ -92,10 +93,12 @@ export class Menu {
     }
 
     private drawText(text: string, position: Point, color: string = Color.White, textAlign: CanvasTextAlign = 'left'): void {
+        this._context.save();
         this._context.font = '32px PixelCode';
         this._context.fillStyle = color;
         this._context.textAlign = textAlign;
         this._context.fillText(text, position.x, position.y, this._canvasWidth);
+        this._context.restore();
     }
 
     private drawSelector(): void {
@@ -104,6 +107,7 @@ export class Menu {
         if (!selectedItem)
             return;
 
+        this._context.save();
         this._context.beginPath();
         this._context.moveTo(selectedItem.position.x - 40, selectedItem.position.y - 25);
         this._context.lineTo(selectedItem.position.x - 40, selectedItem.position.y);
@@ -111,6 +115,7 @@ export class Menu {
         this._context.fillStyle = Color.White;
         this._context.fill();
         this._context.closePath();
+        this._context.restore();
     }
 
     public reset(): void {

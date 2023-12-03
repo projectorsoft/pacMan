@@ -119,7 +119,7 @@ export class Ghost implements ICircleBasedSprite {
                         else
                             this._mode = GhostMode.Frightend;
 
-                        if(counter === 21) {
+                        if(counter >= 21) {
                             this._timersManager.delete(`${this._type}_${GhostMode.Frightend}`);
                             Ghost.GhostsEaten = 0;
                             this._soundsPlayer.play(Asset.AlarmAudio);

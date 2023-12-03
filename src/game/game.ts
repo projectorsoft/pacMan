@@ -250,10 +250,10 @@ export class Game {
         }
 
         if (this._mapManager.pellets.size === 0) {
-            if (this._mapManager.isLastMap()) {
+            /* if (this._mapManager.isLastMap()) {
                 this.endGame(GameState.Finished);
                 return;
-            }
+            } */
 
             this.nextStage();
             return;

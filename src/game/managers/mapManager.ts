@@ -53,7 +53,7 @@ export class MapManager {
         this._assetsManager = assetsManager;
         this._soundsPlayer = soundsPlayer;
         this._timersManager = timersManager;
-        this._maps = [ map0, map1, map2 ]
+        this._maps = [ map1 ]
         this.init();
     }
 
@@ -150,10 +150,12 @@ export class MapManager {
     }
 
     public nextMap(): void {
-        if (this._index + 1 < this._maps.length) {
+        /* if (this._index + 1 < this._maps.length) {
             this._currentMap = this._maps[++this._index];
             this.loadMap();
-        }
+        } */
+
+        this.loadMap();
     }
 
     public isLastMap(): boolean {
