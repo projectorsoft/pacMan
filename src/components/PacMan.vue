@@ -3,10 +3,10 @@
     <div class="row">
       <div class="col">
         <span v-if="!gameLoaded">Loading game... {{ message }}</span>
-        <canvas
+        <canvas :style="{'width': width, 'height': height}"
           id="canvas"
-          width="840"
-          height="810"
+          :width="canvasWidth"
+          :height="canvasHeight"
         >
         </canvas>
       </div>
@@ -21,18 +21,53 @@ import { defineComponent } from 'vue'
 export default defineComponent({
   data() {
     return {
+      game: {},
       gameLoaded: false,
-      message: ''
+      message: '',
+      canvasWidth: 840,
+      canvasHeight: 810,
+      width: this.getWidthInPercents(),
+      height: this.getHeightInPercents()
     }
   },
   mounted() {
-    const game = new Game()
-    game.onGameLoaded = this.onGameLoaded
+    window.addEventListener('resize', () => this.getDimensions());
+    this.game = new Game();
+    (this.game as Game).onGameLoaded = this.onGameLoaded;
+  },
+  unmounted() {
+    window.removeEventListener('resize', () => this.getDimensions());
   },
   methods: {
     onGameLoaded(value: boolean, reason?: string): void {
-      this.gameLoaded = value
-      this.message = reason ? reason : ''
+      this.gameLoaded = value;
+      this.message = reason ? reason : '';
+
+      (this.game as Game).setScale(this.getXScale() / this.getWidthScaleFactor(), this.getYScale() / this.getHeightScaleFactor());
+    },
+    getDimensions(): void {
+      this.width = this.getWidthInPercents();
+      this.height = this.getHeightInPercents();
+      
+      (this.game as Game).setScale(this.getXScale() / this.getWidthScaleFactor(), this.getYScale() / this.getHeightScaleFactor());
+    },
+    getWidthInPercents(): string {
+      return `${this.getWidthScaleFactor() * 100}%`;
+    },
+    getHeightInPercents(): string {
+      return `${this.getHeightScaleFactor() * 100}%`;
+    },
+    getWidthScaleFactor(): number {
+      return window.innerWidth > window.innerHeight ? window.innerHeight / window.innerWidth : 1;
+    },
+    getHeightScaleFactor(): number {
+      return window.innerHeight > window.innerWidth ? window.innerWidth / window.innerHeight : 1;
+    },
+    getXScale(): number {
+      return this.canvasWidth / window.innerWidth;
+    },
+    getYScale(): number {
+      return this.canvasHeight / window.innerHeight;
     }
   }
 })
@@ -50,7 +85,11 @@ export default defineComponent({
 }
 
 #canvas {
-  width: 840px; 
   display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
 }
 </style>

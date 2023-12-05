@@ -3,6 +3,7 @@ import { Ghost } from "./ghost.js"
 import { AssetsManager } from "./managers/assetsManager.js"
 import { InputManager } from "./managers/inputManager.js"
 import { MapManager } from "./managers/mapManager.js"
+import { OnScreenControlsManager } from "./managers/onScreenControlsManager.js"
 import { SoundsPlayer } from "./managers/soundsPlayer.js"
 import { TimersManager } from "./managers/timersManager.js"
 import { Placeholder, TranslationsService } from "./managers/translationsService.js"
@@ -20,6 +21,7 @@ export class Game {
     private _inputManger!: InputManager;
     private _assetsManager!: AssetsManager;
     private _timersManager!: TimersManager;
+    private _onScreenControlsManager!: OnScreenControlsManager;
     private _soundsPlayer!: SoundsPlayer;
     private _translationsService!: TranslationsService;
     private _menu!: Menu;
@@ -43,17 +45,20 @@ export class Game {
 
         this._assetsManager = new AssetsManager();
         this.addAssets();
-        this._assetsManager.loadAll()
-        .then(() => {
-            if (this.onGameLoaded)
-                this.onGameLoaded(true);
+        this._assetsManager
+            .loadAll()
+            .then(() => {
+                this.initialize();
 
-            const pixelCodeFont = this._assetsManager.getFont(Asset.PixelCodeFont);
-            document.fonts.add(pixelCodeFont);
+                if (this.onGameLoaded) {
+                    this.onGameLoaded(true);
+                }
+            })
+            .catch((error: Error) => this.onGameLoaded(false, error.message));
+    }
 
-            this.initialize();
-        })
-        .catch(() => this.onGameLoaded(false, 'One of assets not loaded correctly'));
+    public setScale(xScale: number, yScale: number): void {
+        this._inputManger.setScale(xScale, yScale);
     }
 
     private initialize(): void {
@@ -80,6 +85,9 @@ export class Game {
         this._soundsPlayer = new SoundsPlayer(this._assetsManager);
         this._translationsService = new TranslationsService(this._assetsManager);
         this._mapManager = new MapManager(this._context, this._assetsManager, this._soundsPlayer, this._timersManager);
+        this._onScreenControlsManager = new OnScreenControlsManager(this._context, this._inputManger, this._assetsManager);
+        this._onScreenControlsManager.width = 30;
+        this._onScreenControlsManager.height = 30;
         this._player = new Player(
             this._context, 
             this._mapManager,
@@ -125,6 +133,8 @@ export class Game {
             const image = this._assetsManager.getImage(Asset.PlayerImg);
             this._context.drawImage(image, this._boardWidth + i * image.width, 180, image.width, image.width);
         }
+
+        this._onScreenControlsManager.draw();
 
         this._mapManager.walls.forEach(wall => {
             wall.draw();
@@ -173,9 +183,9 @@ export class Game {
         this._pause = true;
         this._gameState = GameState.Ready;
         this._gameMode = GameMode.Play;
-        this._boardHeight = this._mapManager.currentMap.data.length * Wall.Width;
-        this._boardWidth = this._mapManager.currentMap.data[0].length * Wall.Height;
         this._mapManager.init();
+        this._boardHeight = this._mapManager.currentMap.data.length * Wall.Height;
+        this._boardWidth = this._mapManager.currentMap.data[0].length * Wall.Width;
         this._soundsPlayer.play(Asset.NewGameAudio);
         
         this._timersManager.addTimer(Timers.NewGame, () => {
@@ -184,6 +194,8 @@ export class Game {
             this._player.respawn();
             this._player.life = 3;
             this._player.score = 0;
+            this._onScreenControlsManager.bindOnTouch();
+            this._onScreenControlsManager.position = new Point(this._boardWidth, 270);
         }, 4500);
     }
 
@@ -298,6 +310,7 @@ export class Game {
         this._assetsManager.addImageAsset(Asset.WallsImg, `${AssetsManager.Path}assets/images/walls.png`);
         this._assetsManager.addImageAsset(Asset.GhostsImg, `${AssetsManager.Path}assets/images/ghosts.png`);
         this._assetsManager.addImageAsset(Asset.PlayerImg, `${AssetsManager.Path}assets/images/player.png`);
+        this._assetsManager.addImageAsset(Asset.ArrowsImg, `${AssetsManager.Path}assets/images/arrows.png`);
 
         this._assetsManager.addAudioAsset(Asset.NewGameAudio, `${AssetsManager.Path}assets/sounds/newGame.wav`);
         this._assetsManager.addAudioAsset(Asset.ChompAudio, `${AssetsManager.Path}assets/sounds/chomp.wav`);

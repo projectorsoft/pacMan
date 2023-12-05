@@ -68,9 +68,7 @@ export class Menu {
             item.position.x = this._xOffset + this.getTextCenterPosition(item.text);
             this.drawText(item.text, item.position, Color.White);
         });
-        this._context.save();
         this._context.drawImage(this._logoImg, this._xOffset + (this._canvasWidth - this._logoImg.width) / 2, this._yOffset);
-        this._context.restore();
 
         if (this._animationStoped) {
             this.drawSelector();

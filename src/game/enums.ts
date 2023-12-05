@@ -83,6 +83,7 @@ export enum Asset {
     WallsImg = 'wallIsmg',
     GhostsImg = 'ghostsImg',
     PlayerImg = 'playerImg',
+    ArrowsImg = 'arrowsImg',
     NewGameAudio = 'newGameAudio',
     ChompAudio = 'chompAudio',
     DeathAudio = 'deathAudio',
