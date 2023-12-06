@@ -1,5 +1,5 @@
 import { ICircleBasedSprite } from "./IColidableObject.js";
-import { Asset, Color, Direction, GhostMode, Keys, ScoreType, Timers } from "./enums.js";
+import { Asset, Color, GhostMode, Keys, ScoreType, Timers } from "./enums.js";
 import { Helpers } from "./helpers/helpers.js";
 import { InputManager } from "./managers/inputManager.js";
 import { MapManager } from "./managers/mapManager.js";

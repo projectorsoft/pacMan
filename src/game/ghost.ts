@@ -33,7 +33,6 @@ export class Ghost implements ICircleBasedSprite {
     private _animationFrameSize = 209;
     private _showScore: boolean = false;
     private _currentGhostEaten: number = 0;
-    private _changeToOppositeDirection: boolean = false;
     private _minDstance: number = 999999;
     private _forceMoveRandomly: boolean = false;
     private _respawnDirection: Direction = Direction.Top;
@@ -103,8 +102,6 @@ export class Ghost implements ICircleBasedSprite {
                 }
                 break;
             case GhostMode.Frightend: {
-                    this._changeToOppositeDirection = true;
-
                     //situation when next power up has been eaten and previous one is still ticking
                     if (this._timersManager.exists(`${this._type}_${this.mode}`)) {
                         this._timersManager.delete(`${this._type}_${this.mode}`);

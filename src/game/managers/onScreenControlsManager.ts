@@ -11,8 +11,8 @@ export class OnScreenControlsManager {
     private _assetsManager: AssetsManager;
     private _buttons: Button[] = [];
     private _position: Point = new Point(-300, -300);
-    private _width: number = 100;
-    private _height: number = 20;
+    private _width: number = 80;
+    private _height: number = 80;
     private _arrowsImg!: ImageBitmap;
     
     public set position(value: Point) {

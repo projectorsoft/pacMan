@@ -86,8 +86,8 @@ export class Game {
         this._translationsService = new TranslationsService(this._assetsManager);
         this._mapManager = new MapManager(this._context, this._assetsManager, this._soundsPlayer, this._timersManager);
         this._onScreenControlsManager = new OnScreenControlsManager(this._context, this._inputManger, this._assetsManager);
-        this._onScreenControlsManager.width = 30;
-        this._onScreenControlsManager.height = 30;
+        this._onScreenControlsManager.width = 80;
+        this._onScreenControlsManager.height = 80;
         this._player = new Player(
             this._context, 
             this._mapManager,

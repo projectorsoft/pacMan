@@ -1,5 +1,3 @@
-import { Keys } from "../enums";
-import { InputManager } from "../managers/inputManager";
 import { Point } from "../point";
 
 export class Button {
@@ -26,7 +24,7 @@ export class Button {
 
         if (this.onClick)
             this.onClick();
-        
+
         return true;
     }
 }
